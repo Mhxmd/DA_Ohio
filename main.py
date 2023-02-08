@@ -30,6 +30,7 @@ if __name__ == "__main__":
     process.crawl(WebsiteMapperSpider)
     process.start()
 '''
+# 2nd Modified and Refined Version
 
 import scrapy
 import json
