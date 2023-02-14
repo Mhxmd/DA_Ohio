@@ -51,8 +51,10 @@ class WebsiteImageSpider(scrapy.Spider):
         for img in response.css('img::attr(src)').getall():
             if img.endswith('.jpg'):
                 self.image_urls.append(response.urljoin(img))
+                print(f"Appending {response.urljoin(img)} to image_urls")
 
     def closed(self, reason):
+        print(f"Closed spider with reason: {reason}")
         with open('image_links.json', 'w') as outfile:
             json.dump(self.image_urls, outfile)
 
@@ -69,8 +71,9 @@ if __name__ == "__main__":
     from scrapy.crawler import CrawlerProcess
 
     process = CrawlerProcess({
-        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36'
+        'USER_AGENT': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'
     })
+
     process.crawl(WebsiteImageSpider)
     process.start()
     test_image_urls()
