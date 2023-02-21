@@ -1,68 +1,102 @@
 
-# 1st version before testing and extraction of JPG images
-'''
+# Lab 10b
 
+# Use the Request library
+import requests
+
+# Set the target webpage
+url = 'http://172.18.58.80/freebix/'
+
+
+# Perform a GET request on the target website
+webpage = requests.get(url)
+# This will print the full webpage in text
+print(webpage.text)
+
+
+# Display an "OK" return status code
+print("Status code:")
+print("\t *", webpage.status_code)
+
+
+# Display the website header
+h = requests.head(url)
+print("Header:")
+print("**********")
+# To print line by line
+for x in h.headers:
+    print("\t ", x, ":", h.headers[x])
+print("**********")
+
+
+# Modify the Header user-agent to display "iPhone 14"
+headers = {'User-Agent': 'iPhone 14'}
+# Test against test site that output the requester user-agent
+#url2 = 'http://httpbin.org/headers'
+url2 = 'http://172.18.58.80/headers.php'
+request_header = requests.get(url2, headers=headers)
+print(request_header.text)
+
+# Lab 10c
+
+# Use the Scrapy library
 import scrapy
-import json
 
-class WebsiteMapperSpider(scrapy.Spider):
-    name = "website_mapper"
-    start_urls = [
-        'http://172.18.58.80/freebix/',
-    ]
+
+class NewSpider(scrapy.Spider):
+    name = "new_spider"
+    start_urls = ['http://172.18.58.80/freebix/']
 
     def parse(self, response):
-        # Display the reference webpage
-        print("Reference webpage: ", response.url)
+        css_selector = 'img'
+        for x in response.css(css_selector):
+            newsel = '@src'
+            yield {'Image Link': x.xpath(newsel).extract_first(), }
 
-        # Store the retrieved information in JSON
-        data = {}
-        data['title'] = response.css('title::text').get()
-        data['header'] = response.headers
-        with open('mapped_data.json', 'w') as outfile:
-            json.dump(data, outfile)
+        # To recurse next page
+        page_selector = '.next a ::attr(href)'
+        next_page = response.css(page_selector).extract_first()
+        if next_page:
+            yield scrapy.Request(response.urljoin(next_page), callback=self.parse)
 
-if __name__ == "__main__":
-    from scrapy.crawler import CrawlerProcess
-    process = CrawlerProcess({
-        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36'
-    })
-    process.crawl(WebsiteMapperSpider)
-    process.start()
-'''
-# 2nd Modified and Refined Version
-
-import scrapy
-import json
+# Test scrapytest.py
+#   Terminal: scrapy runspider scrapytest.py
+# Save the output to a file results.json
+#   Terminal: scrapy runspider scrapytest.py -o results.json -t json
 
 
-import json
 
-class WebsiteImageSpider(scrapy.Spider):
-    name = "website_image"
-    start_urls = [
-        'http://172.18.58.80/freebix/',
-    ]
-    image_urls = []
+# Lab 8
+# Demonstrate unit-testing
 
-    def parse(self, response):
-        for next_page in response.css('a::attr(href)').getall():
-            if next_page is not None:
-                yield response.follow(next_page, self.parse)
+import unittest
+import requests
 
-        for img in response.css('img::attr(src)').getall():
-            if img.endswith('.jpg'):
-                self.image_urls.append(response.urljoin(img))
 
-    def closed(self, reason):
-        with open('image_links.json', 'w') as outfile:
-            json.dump(self.image_urls, outfile)
+url = "http://172.18.58.80/freebix/"
 
-if __name__ == "__main__":
-    from scrapy.crawler import CrawlerProcess
 
-    process = CrawlerProcess({
-        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.193 Safari/537.36'
-    })
-    process.crawl(WebsiteImageSpider)
-    process.start()
+# Each test class must be a subclass of unittest.TestCase
+# The class should be named as TestXXXX to indicate to the program that it is a test program
+class TestMyProgram(unittest.TestCase):
+
+    # All methods should be named as test_XXXX to indicate that it is a test case
+
+    # Checking whether the url is responding to requests
+    def test_TestUrl(self):
+        try:
+            resp = requests.get(url)
+            if int(resp.status_code) == 200:
+                print("[TestUrl] URL OK")
+            else:
+                print("[TestUrl] Requested URL not found")
+        except Exception as e:
+            print("[TestUrl] Error: ", {e})
+
+    def test_TestCase_2(self):
+        print("[TestCase_2] Test case 2")
+
+
+# Must invoke the unittest.main() methods
+if __name__ == '__main__':
+    unittest.main()
